@@ -14,4 +14,4 @@ WORKDIR /
 COPY --from=build  /src/w_scan_cpp-${VERSION}/w_scan_cpp .
 RUN apt-get update
 RUN apt-get install -y --no-install-recommends libjpeg62 libcap2 libfreetype6 libfontconfig1 libpugixml1v5 libcurl4 ca-certificates
-CMD ["/w_scan_cpp", "-H"]
+ENTRYPOINT ["/w_scan_cpp"]

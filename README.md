@@ -2,6 +2,14 @@
 
 This repo tries to provide a multiarch Docker container for w_scan_cpp.
 
+# How to use
+
+You have to make the dvb device available to the docker conatiner with the `--device` option:
+
+```bash
+docker run --device /dev/dvb/adapter0 wscan-cpp:latest -fc -cDE
+```
+
 # License Info
 The Dockerfile and code to build the container is distributed under GPLv3 (see the [license file](LICENSE)).
 
