@@ -7,7 +7,7 @@ This repo tries to provide a multiarch Docker container for w_scan_cpp.
 You have to make the dvb device available to the docker container with the `--device` option:
 
 ```bash
-docker run --device /dev/dvb/adapter0 wscan-cpp:latest -fc -cDE
+docker run --device /dev/dvb/adapter0 ghcr.io/urfin78/w_scan_cpp:latest -fc -cDE
 ```
 
 # License Info
