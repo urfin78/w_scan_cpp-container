@@ -1,7 +1,9 @@
-name: Docker image build
+name: Docker image build and push
 
 on:
   push:
+    branches:
+      - 'master'
 
 jobs:
   build:
@@ -10,8 +12,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        arch: [amd64, arm64, 386]
-
+        include:
+          - { arch: arm, variant: v6 }
+          - { arch: arm, variant: v7 }
+          - { arch: amd64, variant: '' }
+          - { arch: 386, variant: '' }
+          - { arch: arm64, variant: '' }
     steps:
     - uses: actions/checkout@v2
 
@@ -24,11 +30,13 @@ jobs:
       with:
         image: w_scan_cpp
         archs: ${{ matrix.arch }}
-        tags: 20210331-${{ matrix.arch }}
+        tags: 20210331-${{ matrix.arch }}${{ matrix.variant }}
         dockerfiles: |
           ./Dockerfile
         build-args: |
           VERSION=20210331
+        extra-args: |
+          --variant=${{ matrix.variant }}
 
     - name: Push latest image to ghcr
       uses: redhat-actions/push-to-registry@v2
@@ -41,7 +49,7 @@ jobs:
   
   create-manifest:
     needs: build
-    name: Create manifest for image
+    name: Create and push manifest for multiarch image
     runs-on: ubuntu-latest
 
     steps:
@@ -57,13 +65,17 @@ jobs:
         docker pull ghcr.io/${{ github.repository_owner }}/w_scan_cpp:20210331-arm64 
         docker pull ghcr.io/${{ github.repository_owner }}/w_scan_cpp:20210331-amd64
         docker pull ghcr.io/${{ github.repository_owner }}/w_scan_cpp:20210331-386
+        docker pull ghcr.io/${{ github.repository_owner }}/w_scan_cpp:20210331-armv6
+        docker pull ghcr.io/${{ github.repository_owner }}/w_scan_cpp:20210331-armv7
 
     - name: create version manifest list
       run: |
-        docker manifest create ghcr.io/${{ github.repository_owner }}/w_scan_cpp:20210331 ghcr.io/${{ github.repository_owner }}/w_scan_cpp:20210331-arm64 ghcr.io/${{ github.repository_owner }}/w_scan_cpp:20210331-amd64 ghcr.io/${{ github.repository_owner }}/w_scan_cpp:20210331-386
+        docker manifest create ghcr.io/${{ github.repository_owner }}/w_scan_cpp:20210331 ghcr.io/${{ github.repository_owner }}/w_scan_cpp:20210331-arm64 ghcr.io/${{ github.repository_owner }}/w_scan_cpp:20210331-amd64 ghcr.io/${{ github.repository_owner }}/w_scan_cpp:20210331-386 ghcr.io/${{ github.repository_owner }}/w_scan_cpp:20210331-armv6 ghcr.io/${{ github.repository_owner }}/w_scan_cpp:20210331-armv7
         docker manifest annotate ghcr.io/${{ github.repository_owner }}/w_scan_cpp:20210331 ghcr.io/${{ github.repository_owner }}/w_scan_cpp:20210331-arm64 --arch arm64
         docker manifest annotate ghcr.io/${{ github.repository_owner }}/w_scan_cpp:20210331 ghcr.io/${{ github.repository_owner }}/w_scan_cpp:20210331-amd64 --arch amd64
         docker manifest annotate ghcr.io/${{ github.repository_owner }}/w_scan_cpp:20210331 ghcr.io/${{ github.repository_owner }}/w_scan_cpp:20210331-386 --arch 386
+        docker manifest annotate ghcr.io/${{ github.repository_owner }}/w_scan_cpp:20210331 ghcr.io/${{ github.repository_owner }}/w_scan_cpp:20210331-armv6 --arch arm --variant v6
+        docker manifest annotate ghcr.io/${{ github.repository_owner }}/w_scan_cpp:20210331 ghcr.io/${{ github.repository_owner }}/w_scan_cpp:20210331-armv7 --arch arm --variant v7
 
     - name: push version manifest
       run: |
@@ -71,11 +83,13 @@ jobs:
 
     - name: create lates manifest list
       run: |
-        docker manifest create ghcr.io/${{ github.repository_owner }}/w_scan_cpp:latest ghcr.io/${{ github.repository_owner }}/w_scan_cpp:20210331-arm64 ghcr.io/${{ github.repository_owner }}/w_scan_cpp:20210331-amd64 ghcr.io/${{ github.repository_owner }}/w_scan_cpp:20210331-386
+        docker manifest create ghcr.io/${{ github.repository_owner }}/w_scan_cpp:latest ghcr.io/${{ github.repository_owner }}/w_scan_cpp:20210331-arm64 ghcr.io/${{ github.repository_owner }}/w_scan_cpp:20210331-amd64 ghcr.io/${{ github.repository_owner }}/w_scan_cpp:20210331-386  ghcr.io/${{ github.repository_owner }}/w_scan_cpp:20210331-armv6 ghcr.io/${{ github.repository_owner }}/w_scan_cpp:20210331-armv7
         docker manifest annotate ghcr.io/${{ github.repository_owner }}/w_scan_cpp:latest ghcr.io/${{ github.repository_owner }}/w_scan_cpp:20210331-arm64 --arch arm64
         docker manifest annotate ghcr.io/${{ github.repository_owner }}/w_scan_cpp:latest ghcr.io/${{ github.repository_owner }}/w_scan_cpp:20210331-amd64 --arch amd64
         docker manifest annotate ghcr.io/${{ github.repository_owner }}/w_scan_cpp:latest ghcr.io/${{ github.repository_owner }}/w_scan_cpp:20210331-386 --arch 386
+        docker manifest annotate ghcr.io/${{ github.repository_owner }}/w_scan_cpp:latest ghcr.io/${{ github.repository_owner }}/w_scan_cpp:20210331-armv6 --arch arm --variant v6
+        docker manifest annotate ghcr.io/${{ github.repository_owner }}/w_scan_cpp:latest ghcr.io/${{ github.repository_owner }}/w_scan_cpp:20210331-armv7 --arch arm --variant v7
 
     - name: push latest manifest
       run: |
-        docker manifest push ghcr.io/${{ github.repository_owner }}/w_scan_cpp:latest  
+        docker manifest push ghcr.io/${{ github.repository_owner }}/w_scan_cpp:latest
