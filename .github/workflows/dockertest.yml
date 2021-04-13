@@ -15,12 +15,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - { arch: arm, variant: v6 }
-          - { arch: arm, variant: v7 }
-          - { arch: amd64, variant: '' }
-          - { arch: 386, variant: '' }
-          - { arch: arm64, variant: '' }
+        arch: [386, amd64, arm, arm64]
+        variant: [v6, v7]
+        locale: [en_US.UTF-8, de_DE.UTF-8]
+        exclude:
+          - { arch: 386, variant: v6 }
+          - { arch: 386, variant: v7 }
+          - { arch: amd64, variant: v6 }
+          - { arch: amd64, variant: v7 }
+          - { arch: arm64, variant: v6 }
+          - { arch: arm64, variant: v7 }
     steps:
     - uses: actions/checkout@v2
 
@@ -38,5 +42,6 @@ jobs:
           ./Dockerfile
         build-args: |
           VERSION=20210331
+          LOCALE=${{ matrix.locale }}
         extra-args: |
           --variant=${{ matrix.variant }}
