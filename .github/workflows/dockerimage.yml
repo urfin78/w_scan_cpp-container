@@ -37,7 +37,7 @@ jobs:
           ./Dockerfile
         build-args: |
           VERSION=${{ matrix.wscan-version }}
-          LOCALE="${{ matrix.locale }}.UTF-8"
+          LOCALE=${{ matrix.locale }}.UTF-8
         extra-args: |
           --variant=${{ matrix.variant }}
 
