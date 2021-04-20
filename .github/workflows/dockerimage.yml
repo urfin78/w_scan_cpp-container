@@ -16,10 +16,10 @@ jobs:
         arch: [386, amd64, arm64]
         locale: [en_US, de_DE]
         include:
-          - { arch: arm, locale: en_US, variant: v6 }
-          - { arch: arm, locale: en_US, variant: v7 }
-          - { arch: arm, locale: de_DE, variant: v6 }
-          - { arch: arm, locale: de_DE, variant: v7 }
+          - { wscan-version: 20210331, arch: arm, locale: en_US, variant: v6 }
+          - { wscan-version: 20210331, arch: arm, locale: en_US, variant: v7 }
+          - { wscan-version: 20210331, arch: arm, locale: de_DE, variant: v6 }
+          - { wscan-version: 20210331, arch: arm, locale: de_DE, variant: v7 }
     steps:
     - uses: actions/checkout@v2
 
