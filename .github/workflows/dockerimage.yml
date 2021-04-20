@@ -55,7 +55,7 @@ jobs:
     needs: build
     name: Create and push manifest for multiarch image
     runs-on: ubuntu-latest
-     strategy:
+    strategy:
       fail-fast: false
       matrix:
         wscan-version: [20210331]
