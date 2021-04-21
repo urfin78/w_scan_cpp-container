@@ -10,8 +10,10 @@ RUN make download
 RUN make -j4
 FROM debian:10-slim
 ARG VERSION
+ARG LOCALE
 WORKDIR /
 COPY --from=build  /src/w_scan_cpp-${VERSION}/w_scan_cpp .
-RUN apt-get update
-RUN apt-get install -y --no-install-recommends libjpeg62 libcap2 libfreetype6 libfontconfig1 libpugixml1v5 libcurl4 ca-certificates
+RUN DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends libjpeg62 libcap2 libfreetype6 libfontconfig1 libpugixml1v5 libcurl4 ca-certificates locales && rm -rf /var/lib/apt/lists/*
+RUN echo "${LOCALE} UTF-8" > /etc/locale.gen && dpkg-reconfigure --frontend=noninteractive locales && update-locale LANG="${LOCALE}"
+ENV LANG ${LOCALE}
 ENTRYPOINT ["/w_scan_cpp"]
