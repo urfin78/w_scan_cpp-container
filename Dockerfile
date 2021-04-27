@@ -13,6 +13,10 @@ ARG VERSION
 ARG LOCALE
 WORKDIR /
 COPY --from=build  /src/w_scan_cpp-${VERSION}/w_scan_cpp .
+COPY --from=build  /src/w_scan_cpp-${VERSION}.tar.bz2 SOURCE_w_scan_cpp-${VERSION}.tar.bz2
+COPY LICENSE .
+COPY LICENSE.GPLv2 .
+COPY README.md .
 RUN DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends libjpeg62 libcap2 libfreetype6 libfontconfig1 libpugixml1v5 libcurl4 ca-certificates locales && rm -rf /var/lib/apt/lists/*
 RUN echo "${LOCALE} UTF-8" > /etc/locale.gen && dpkg-reconfigure --frontend=noninteractive locales && update-locale LANG="${LOCALE}"
 ENV LANG ${LOCALE}
