@@ -12,8 +12,15 @@ It uses parts of the following projects:
 * **VDR satip Plugin** by Rolf Ahrenberg (https://github.com/rofafor/vdr-plugin-satip)  
 
 ## Image Tag structure
-w_scan_cpp:*architecture*-*locale*
+### Multi-arch
+w_scan_cpp:latest-*locale*  
+w_scan_cpp:*version*-*locale*
 
+### Specific architecture
+w_scan_cpp:latest-*locale*-*architecture*  
+w_scan_cpp:*version*-*locale*-*architecture*
+
+### Latest
 latest == latest-*en_US*
 
 ## Available architecures
