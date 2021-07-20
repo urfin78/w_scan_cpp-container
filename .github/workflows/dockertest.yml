@@ -15,14 +15,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        wscan-version: [20210608]
+        wscan-version: [20210718]
         arch: [386, amd64, arm64]
         locale: [en_US, de_DE]
         include:
-          - { wscan-version: 20210608, arch: arm, locale: en_US, variant: v6 }
-          - { wscan-version: 20210608, arch: arm, locale: en_US, variant: v7 }
-          - { wscan-version: 20210608, arch: arm, locale: de_DE, variant: v6 }
-          - { wscan-version: 20210608, arch: arm, locale: de_DE, variant: v7 }
+          - { wscan-version: 20210718, arch: arm, locale: en_US, variant: v6 }
+          - { wscan-version: 20210718, arch: arm, locale: en_US, variant: v7 }
+          - { wscan-version: 20210718, arch: arm, locale: de_DE, variant: v6 }
+          - { wscan-version: 20210718, arch: arm, locale: de_DE, variant: v7 }
     steps:
     - uses: actions/checkout@v2
 
