@@ -1,4 +1,4 @@
-FROM debian:10 as build
+FROM debian:11 as build
 ARG VERSION
 RUN apt-get update
 RUN apt-get -y install build-essential wget bzip2 git linux-libc-dev libfreetype6-dev libfontconfig1-dev libcurl4-openssl-dev libjpeg-dev libpugixml-dev libcap-dev ca-certificates
@@ -8,7 +8,7 @@ RUN tar xfv w_scan_cpp-${VERSION}.tar.bz2
 WORKDIR /src/w_scan_cpp-${VERSION}
 RUN make download
 RUN make -j4
-FROM debian:10-slim
+FROM debian:11
 ARG VERSION
 ARG LOCALE
 WORKDIR /
