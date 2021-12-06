@@ -18,11 +18,12 @@ jobs:
         wscan-version: [20211128]
         arch: [386, amd64, arm64]
         locale: [en_US, de_DE]
+        libversion: [1.1.1]
         include:
-          - { wscan-version: 20211128, arch: arm, locale: en_US, variant: v6 }
-          - { wscan-version: 20211128, arch: arm, locale: en_US, variant: v7 }
-          - { wscan-version: 20211128, arch: arm, locale: de_DE, variant: v6 }
-          - { wscan-version: 20211128, arch: arm, locale: de_DE, variant: v7 }
+          - { wscan-version: 20211128, libversion: 1.1.1, arch: arm, locale: en_US, variant: v6 }
+          - { wscan-version: 20211128, libversion: 1.1.1, arch: arm, locale: en_US, variant: v7 }
+          - { wscan-version: 20211128, libversion: 1.1.1, arch: arm, locale: de_DE, variant: v6 }
+          - { wscan-version: 20211128, libversion: 1.1.1, arch: arm, locale: de_DE, variant: v7 }
     steps:
     - uses: actions/checkout@v2
 
@@ -41,5 +42,6 @@ jobs:
         build-args: |
           VERSION=${{ matrix.wscan-version }}
           LOCALE=${{ matrix.locale }}.UTF-8
+          LIBVERSION=${{ matrix.libversion }}
         extra-args: |
           --variant=${{ matrix.variant }}
