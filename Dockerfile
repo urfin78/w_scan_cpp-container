@@ -18,6 +18,7 @@ RUN make -j4
 FROM debian:11-slim
 ARG VERSION
 ARG LOCALE
+ARG LIBVERSION
 WORKDIR /
 RUN mkdir -p /usr/include /usr/lib/pkconfig
 COPY --from=build /usr/lib/librepfunc.so.${LIBVERSION} /usr/lib/librepfunc.so.${LIBVERSION}
