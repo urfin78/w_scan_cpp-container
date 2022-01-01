@@ -19,8 +19,13 @@ FROM debian:11-slim
 ARG VERSION
 ARG LOCALE
 WORKDIR /
-COPY --from=build  /src/w_scan_cpp-${VERSION}/w_scan_cpp .
-COPY --from=build  /src/w_scan_cpp-${VERSION}.tar.bz2 SOURCE_w_scan_cpp-${VERSION}.tar.bz2
+RUN mkdir -p /usr/include /usr/lib/pkconfig
+COPY --from=build /usr/lib/librepfunc.so.${LIBVERSION} /usr/lib/librepfunc.so.${LIBVERSION}
+COPY --from=build /usr/lib/pkgconfig/librepfunc.pc /usr/lib/pkgconfig/librepfunc.pc 
+COPY --from=build /usr/include/repfunc.h /usr/include/repfunc.h
+RUN ln -sfr /usr/lib/librepfunc.so.${LIBVERSION} /usr/lib/librepfunc.so
+COPY --from=build /src/w_scan_cpp-${VERSION}/w_scan_cpp .
+COPY --from=build /src/w_scan_cpp-${VERSION}.tar.bz2 SOURCE_w_scan_cpp-${VERSION}.tar.bz2
 COPY LICENSE .
 COPY LICENSE.GPLv2 .
 COPY README.md .
