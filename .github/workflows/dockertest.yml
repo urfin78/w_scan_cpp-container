@@ -25,7 +25,7 @@ jobs:
           - { wscan-version: 20220105, libversion: 1.2.0, arch: arm, locale: de_DE, variant: v6 }
           - { wscan-version: 20220105, libversion: 1.2.0, arch: arm, locale: de_DE, variant: v7 }
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Prepare multiarch
       run: sudo podman run --rm --privileged multiarch/qemu-user-static --reset -p yes
