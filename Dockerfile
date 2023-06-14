@@ -1,4 +1,4 @@
-FROM debian:11 as build
+FROM debian:12 as build
 ARG VERSION
 ARG LIBVERSION
 RUN apt-get update
@@ -15,7 +15,7 @@ RUN tar xfv w_scan_cpp-${VERSION}.tar.bz2
 WORKDIR /src/w_scan_cpp-${VERSION}
 RUN make download
 RUN make -j4
-FROM debian:11-slim
+FROM debian:12-slim
 ARG VERSION
 ARG LOCALE
 ARG LIBVERSION
