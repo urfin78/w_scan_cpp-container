@@ -8,7 +8,7 @@ WORKDIR /src
 RUN git clone https://github.com/wirbel-at-vdr-portal/librepfunc
 WORKDIR /src/librepfunc
 RUN git checkout tags/${LIBVERSION}
-RUN make -j4
+RUN make -j1
 RUN make install
 WORKDIR /src
 RUN wget https://www.gen2vdr.de/wirbel/w_scan_cpp/w_scan_cpp-${VERSION}.tar.bz2
@@ -16,7 +16,7 @@ RUN tar xfv w_scan_cpp-${VERSION}.tar.bz2
 WORKDIR /src/w_scan_cpp-${VERSION}
 RUN sed -E -i "s/(WIRBELSCAN_VERSION = wirbelscan-)[0-9]+\.[0-9]+\.[0-9]+/\1${PLUGINVERSION}/g" Makefile
 RUN make download
-RUN make -j4
+RUN make -j1
 FROM debian:12-slim
 ARG VERSION
 ARG LOCALE
