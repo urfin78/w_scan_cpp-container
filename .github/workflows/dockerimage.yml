@@ -8,7 +8,7 @@ on:
 jobs:
   build:
     name: Build latest Image
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -16,11 +16,12 @@ jobs:
         arch: [386, amd64, arm64]
         locale: [en_US, de_DE]
         libversion: [1.8.0]
+        pluginversion: [2024.09.15]
         include:
-          - { wscan-version: 20231015, libversion: 1.8.0, arch: arm, locale: en_US, variant: v6 }
-          - { wscan-version: 20231015, libversion: 1.8.0, arch: arm, locale: en_US, variant: v7 }
-          - { wscan-version: 20231015, libversion: 1.8.0, arch: arm, locale: de_DE, variant: v6 }
-          - { wscan-version: 20231015, libversion: 1.8.0, arch: arm, locale: de_DE, variant: v7 }
+          - { wscan-version: 20231015, pluginversion: 2024.09.15, libversion: 1.8.0, arch: arm, locale: en_US, variant: v6 }
+          - { wscan-version: 20231015, pluginversion: 2024.09.15, libversion: 1.8.0, arch: arm, locale: en_US, variant: v7 }
+          - { wscan-version: 20231015, pluginversion: 2024.09.15, libversion: 1.8.0, arch: arm, locale: de_DE, variant: v6 }
+          - { wscan-version: 20231015, pluginversion: 2024.09.15, libversion: 1.8.0, arch: arm, locale: de_DE, variant: v7 }
     steps:
     - uses: actions/checkout@v4
 
@@ -40,6 +41,7 @@ jobs:
           VERSION=${{ matrix.wscan-version }}
           LOCALE=${{ matrix.locale }}.UTF-8
           LIBVERSION=${{ matrix.libversion }}
+          PLUGINVERSION=${{ matrix.pluginversion }}
         extra-args: |
           --variant=${{ matrix.variant }}
 
