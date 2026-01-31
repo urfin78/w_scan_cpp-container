@@ -1,4 +1,4 @@
-FROM debian:11 as build
+FROM debian:13 as build
 ARG VERSION
 ARG LIBVERSION
 RUN apt-get update
@@ -15,7 +15,7 @@ RUN tar xfv w_scan_cpp-${VERSION}.tar.bz2
 WORKDIR /src/w_scan_cpp-${VERSION}
 RUN make download
 RUN make -j4
-FROM debian:11-slim
+FROM debian:13-slim
 ARG VERSION
 ARG LOCALE
 ARG LIBVERSION
@@ -30,7 +30,7 @@ COPY --from=build /src/w_scan_cpp-${VERSION}.tar.bz2 SOURCE_w_scan_cpp-${VERSION
 COPY LICENSE .
 COPY LICENSE.GPLv2 .
 COPY README.md .
-RUN DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends libjpeg62 libcap2 libfreetype6 libfontconfig1 libpugixml1v5 libcurl4 ca-certificates locales && rm -rf /var/lib/apt/lists/*
+RUN DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends libjpeg62 libcap2 libfreetype6 libfontconfig1 libpugixml1v5 libcurl4t64 ca-certificates locales && rm -rf /var/lib/apt/lists/*
 RUN echo "${LOCALE} UTF-8" > /etc/locale.gen && dpkg-reconfigure --frontend=noninteractive locales && update-locale LANG="${LOCALE}"
 ENV LANG ${LOCALE}
 ENTRYPOINT ["/w_scan_cpp"]
