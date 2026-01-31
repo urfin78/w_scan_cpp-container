@@ -1,4 +1,4 @@
-FROM debian:12 AS build
+FROM debian:13 AS build
 ARG VERSION
 ARG LIBVERSION
 ARG PLUGINVERSION
@@ -17,7 +17,7 @@ WORKDIR /src/w_scan_cpp-${VERSION}
 RUN sed -E -i "s/(WIRBELSCAN_VERSION = wirbelscan-)[0-9]+\.[0-9]+\.[0-9]+/\1${PLUGINVERSION}/g" Makefile
 RUN make download
 RUN make -j1
-FROM debian:12-slim
+FROM debian:13-slim
 ARG VERSION
 ARG LOCALE
 ARG LIBVERSION
