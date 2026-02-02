@@ -33,7 +33,7 @@ jobs:
           - { wscan-version: 20231015, arch: arm, locale: de_DE, variant: v7, libversion: 1.8.0, pluginversion: 2024.09.15, runner: ubuntu-24.04, platform: linux/arm/v7, qemu: true }
     
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Set up QEMU
       if: matrix.qemu == true
