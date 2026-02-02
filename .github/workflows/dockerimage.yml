@@ -8,53 +8,63 @@ on:
 jobs:
   build:
     name: Build latest Image
-    runs-on: ubuntu-24.04
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
-        wscan-version: [20231015]
-        arch: [386, amd64, arm64]
-        locale: [en_US, de_DE]
-        libversion: [1.8.0]
-        pluginversion: [2024.09.15]
         include:
-          - { wscan-version: 20231015, pluginversion: 2024.09.15, libversion: 1.8.0, arch: arm, locale: en_US, variant: v6 }
-          - { wscan-version: 20231015, pluginversion: 2024.09.15, libversion: 1.8.0, arch: arm, locale: en_US, variant: v7 }
-          - { wscan-version: 20231015, pluginversion: 2024.09.15, libversion: 1.8.0, arch: arm, locale: de_DE, variant: v6 }
-          - { wscan-version: 20231015, pluginversion: 2024.09.15, libversion: 1.8.0, arch: arm, locale: de_DE, variant: v7 }
+          # AMD64 nativ
+          - { wscan-version: 20231015, arch: amd64, locale: en_US, libversion: 1.8.0, pluginversion: 2024.09.15, runner: ubuntu-24.04, platform: linux/amd64 }
+          - { wscan-version: 20231015, arch: amd64, locale: de_DE, libversion: 1.8.0, pluginversion: 2024.09.15, runner: ubuntu-24.04, platform: linux/amd64 }
+          
+          # ARM64 nativ
+          - { wscan-version: 20231015, arch: arm64, locale: en_US, libversion: 1.8.0, pluginversion: 2024.09.15, runner: ubuntu-24.04-arm, platform: linux/arm64 }
+          - { wscan-version: 20231015, arch: arm64, locale: de_DE, libversion: 1.8.0, pluginversion: 2024.09.15, runner: ubuntu-24.04-arm, platform: linux/arm64 }
+          
+          # QEMU builds
+          - { wscan-version: 20231015, arch: 386, locale: en_US, libversion: 1.8.0, pluginversion: 2024.09.15, runner: ubuntu-24.04, platform: linux/386, qemu: true }
+          - { wscan-version: 20231015, arch: 386, locale: de_DE, libversion: 1.8.0, pluginversion: 2024.09.15, runner: ubuntu-24.04, platform: linux/386, qemu: true }
+          - { wscan-version: 20231015, arch: arm, locale: en_US, variant: v6, libversion: 1.8.0, pluginversion: 2024.09.15, runner: ubuntu-24.04, platform: linux/arm/v6, qemu: true }
+          - { wscan-version: 20231015, arch: arm, locale: en_US, variant: v7, libversion: 1.8.0, pluginversion: 2024.09.15, runner: ubuntu-24.04, platform: linux/arm/v7, qemu: true }
+          - { wscan-version: 20231015, arch: arm, locale: de_DE, variant: v6, libversion: 1.8.0, pluginversion: 2024.09.15, runner: ubuntu-24.04, platform: linux/arm/v6, qemu: true }
+          - { wscan-version: 20231015, arch: arm, locale: de_DE, variant: v7, libversion: 1.8.0, pluginversion: 2024.09.15, runner: ubuntu-24.04, platform: linux/arm/v7, qemu: true }
+    
     steps:
     - uses: actions/checkout@v4
 
-    - name: Prepare multiarch
-      run: sudo podman run --rm --privileged multiarch/qemu-user-static --reset -p yes
+    - name: Set up QEMU
+      if: matrix.qemu == true
+      uses: docker/setup-qemu-action@v3
+      with:
+        platforms: ${{ matrix.platform }}
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Login to GHCR
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
           
     - name: Build latest image
       id: build-image
-      uses: redhat-actions/buildah-build@v2
+      uses: docker/build-push-action@v5
       with:
-        image: w_scan_cpp
-        archs: ${{ matrix.arch }}
-        tags: ${{ matrix.wscan-version }}-${{ matrix.locale }}-${{ matrix.arch }}${{ matrix.variant }}
-        dockerfiles: |
-          ./Dockerfile
+        context: .
+        file: ./Dockerfile
+        platforms: ${{ matrix.platform }}
+        tags: ghcr.io/${{ github.repository_owner }}/w_scan_cpp:${{ matrix.wscan-version }}-${{ matrix.locale }}-${{ matrix.arch }}${{ matrix.variant }}
         build-args: |
           VERSION=${{ matrix.wscan-version }}
           LOCALE=${{ matrix.locale }}.UTF-8
           LIBVERSION=${{ matrix.libversion }}
           PLUGINVERSION=${{ matrix.pluginversion }}
-        extra-args: |
-          --variant=${{ matrix.variant }}
+        push: true
+        cache-from: type=gha,scope=${{ matrix.arch }}${{ matrix.variant }}
+        cache-to: type=gha,mode=max,scope=${{ matrix.arch }}${{ matrix.variant }}
 
-
-    - name: Push latest image to ghcr
-      uses: redhat-actions/push-to-registry@v2
-      with:
-        image: ${{ steps.build-image.outputs.image }}
-        tags: ${{ steps.build-image.outputs.tags }}
-        registry: ghcr.io/${{ github.repository_owner }}
-        username: ${{ github.repository_owner }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-  
   create-manifest:
     needs: build
     name: Create and push manifest for multiarch image
