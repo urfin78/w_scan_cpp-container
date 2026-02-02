@@ -48,7 +48,7 @@ jobs:
         username: ${{ github.repository_owner }}
         password: ${{ secrets.GITHUB_TOKEN }}
           
-    - name: Build latest image
+    - name: Build and push with arch-specific tag
       id: build-image
       uses: docker/build-push-action@v5
       with:
@@ -56,26 +56,48 @@ jobs:
         file: ./Dockerfile
         platforms: ${{ matrix.platform }}
         tags: ghcr.io/${{ github.repository_owner }}/w_scan_cpp:${{ matrix.wscan-version }}-${{ matrix.locale }}-${{ matrix.arch }}${{ matrix.variant }}
+        push: true
         build-args: |
           VERSION=${{ matrix.wscan-version }}
           LOCALE=${{ matrix.locale }}.UTF-8
           LIBVERSION=${{ matrix.libversion }}
           PLUGINVERSION=${{ matrix.pluginversion }}
-        push: true
-        cache-from: type=gha,scope=${{ matrix.arch }}${{ matrix.variant }}
-        cache-to: type=gha,mode=max,scope=${{ matrix.arch }}${{ matrix.variant }}
+        cache-from: type=gha,scope=${{ matrix.arch }}${{ matrix.variant }}-${{ matrix.locale }}
+        cache-to: type=gha,mode=max,scope=${{ matrix.arch }}${{ matrix.variant }}-${{ matrix.locale }}
+    
+    - name: Export digest
+      run: |
+        mkdir -p /tmp/digests
+        digest="${{ steps.build-image.outputs.digest }}"
+        touch "/tmp/digests/${digest#sha256:}"
+        
+    - name: Upload digest
+      uses: actions/upload-artifact@v4
+      with:
+        name: digests-${{ matrix.wscan-version }}-${{ matrix.locale }}-${{ matrix.arch }}${{ matrix.variant }}
+        path: /tmp/digests/*
+        retention-days: 1
 
-  create-manifest:
+  merge:
     needs: build
-    name: Create and push manifest for multiarch image
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         wscan-version: [20231015]
         locale: [en_US, de_DE]
-
+    
     steps:
+    - name: Download digests
+      uses: actions/download-artifact@v4
+      with:
+        path: /tmp/digests
+        pattern: digests-${{ matrix.wscan-version }}-${{ matrix.locale }}-*
+        merge-multiple: true
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
     - name: Login to GHCR
       uses: docker/login-action@v3
       with:
@@ -83,76 +105,29 @@ jobs:
         username: ${{ github.repository_owner }}
         password: ${{ secrets.GITHUB_TOKEN }}
     
-    - name: create version manifest list
+    - name: Create manifest list and push (version tag)
+      working-directory: /tmp/digests
       run: |
-        docker manifest create ghcr.io/${{ github.repository_owner }}/w_scan_cpp:${{ matrix.wscan-version }}-${{ matrix.locale }} \
-          --amend ghcr.io/${{ github.repository_owner }}/w_scan_cpp:${{ matrix.wscan-version }}-${{ matrix.locale }}-arm64 \
-          --amend ghcr.io/${{ github.repository_owner }}/w_scan_cpp:${{ matrix.wscan-version }}-${{ matrix.locale }}-amd64 \
-          --amend ghcr.io/${{ github.repository_owner }}/w_scan_cpp:${{ matrix.wscan-version }}-${{ matrix.locale }}-386 \
-          --amend ghcr.io/${{ github.repository_owner }}/w_scan_cpp:${{ matrix.wscan-version }}-${{ matrix.locale }}-armv6 \
-          --amend ghcr.io/${{ github.repository_owner }}/w_scan_cpp:${{ matrix.wscan-version }}-${{ matrix.locale }}-armv7
-        
-        docker manifest annotate ghcr.io/${{ github.repository_owner }}/w_scan_cpp:${{ matrix.wscan-version }}-${{ matrix.locale }} \
-          ghcr.io/${{ github.repository_owner }}/w_scan_cpp:${{ matrix.wscan-version }}-${{ matrix.locale }}-arm64 --arch arm64
-        docker manifest annotate ghcr.io/${{ github.repository_owner }}/w_scan_cpp:${{ matrix.wscan-version }}-${{ matrix.locale }} \
-          ghcr.io/${{ github.repository_owner }}/w_scan_cpp:${{ matrix.wscan-version }}-${{ matrix.locale }}-amd64 --arch amd64
-        docker manifest annotate ghcr.io/${{ github.repository_owner }}/w_scan_cpp:${{ matrix.wscan-version }}-${{ matrix.locale }} \
-          ghcr.io/${{ github.repository_owner }}/w_scan_cpp:${{ matrix.wscan-version }}-${{ matrix.locale }}-386 --arch 386
-        docker manifest annotate ghcr.io/${{ github.repository_owner }}/w_scan_cpp:${{ matrix.wscan-version }}-${{ matrix.locale }} \
-          ghcr.io/${{ github.repository_owner }}/w_scan_cpp:${{ matrix.wscan-version }}-${{ matrix.locale }}-armv6 --arch arm --variant v6
-        docker manifest annotate ghcr.io/${{ github.repository_owner }}/w_scan_cpp:${{ matrix.wscan-version }}-${{ matrix.locale }} \
-          ghcr.io/${{ github.repository_owner }}/w_scan_cpp:${{ matrix.wscan-version }}-${{ matrix.locale }}-armv7 --arch arm --variant v7
-
-    - name: push version manifest
-      run: |
-        docker manifest push ghcr.io/${{ github.repository_owner }}/w_scan_cpp:${{ matrix.wscan-version }}-${{ matrix.locale }}
-
-    - name: create latest-locale manifest list
-      run: |
-        docker manifest create ghcr.io/${{ github.repository_owner }}/w_scan_cpp:latest-${{ matrix.locale }} \
-          --amend ghcr.io/${{ github.repository_owner }}/w_scan_cpp:${{ matrix.wscan-version }}-${{ matrix.locale }}-arm64 \
-          --amend ghcr.io/${{ github.repository_owner }}/w_scan_cpp:${{ matrix.wscan-version }}-${{ matrix.locale }}-amd64 \
-          --amend ghcr.io/${{ github.repository_owner }}/w_scan_cpp:${{ matrix.wscan-version }}-${{ matrix.locale }}-386 \
-          --amend ghcr.io/${{ github.repository_owner }}/w_scan_cpp:${{ matrix.wscan-version }}-${{ matrix.locale }}-armv6 \
-          --amend ghcr.io/${{ github.repository_owner }}/w_scan_cpp:${{ matrix.wscan-version }}-${{ matrix.locale }}-armv7
-        
-        docker manifest annotate ghcr.io/${{ github.repository_owner }}/w_scan_cpp:latest-${{ matrix.locale }} \
-          ghcr.io/${{ github.repository_owner }}/w_scan_cpp:${{ matrix.wscan-version }}-${{ matrix.locale }}-arm64 --arch arm64
-        docker manifest annotate ghcr.io/${{ github.repository_owner }}/w_scan_cpp:latest-${{ matrix.locale }} \
-          ghcr.io/${{ github.repository_owner }}/w_scan_cpp:${{ matrix.wscan-version }}-${{ matrix.locale }}-amd64 --arch amd64
-        docker manifest annotate ghcr.io/${{ github.repository_owner }}/w_scan_cpp:latest-${{ matrix.locale }} \
-          ghcr.io/${{ github.repository_owner }}/w_scan_cpp:${{ matrix.wscan-version }}-${{ matrix.locale }}-386 --arch 386
-        docker manifest annotate ghcr.io/${{ github.repository_owner }}/w_scan_cpp:latest-${{ matrix.locale }} \
-          ghcr.io/${{ github.repository_owner }}/w_scan_cpp:${{ matrix.wscan-version }}-${{ matrix.locale }}-armv6 --arch arm --variant v6
-        docker manifest annotate ghcr.io/${{ github.repository_owner }}/w_scan_cpp:latest-${{ matrix.locale }} \
-          ghcr.io/${{ github.repository_owner }}/w_scan_cpp:${{ matrix.wscan-version }}-${{ matrix.locale }}-armv7 --arch arm --variant v7
+        docker buildx imagetools create \
+          -t ghcr.io/${{ github.repository_owner }}/w_scan_cpp:${{ matrix.wscan-version }}-${{ matrix.locale }} \
+          $(printf 'ghcr.io/${{ github.repository_owner }}/w_scan_cpp@sha256:%s ' *)
     
-    - name: push latest manifest
+    - name: Create manifest list and push (latest-locale tag)
+      working-directory: /tmp/digests
       run: |
-        docker manifest push ghcr.io/${{ github.repository_owner }}/w_scan_cpp:latest-${{ matrix.locale }}
-
-    - name: create latest manifest list
-      if: ${{ matrix.locale == 'en_US' }}
+        docker buildx imagetools create \
+          -t ghcr.io/${{ github.repository_owner }}/w_scan_cpp:latest-${{ matrix.locale }} \
+          $(printf 'ghcr.io/${{ github.repository_owner }}/w_scan_cpp@sha256:%s ' *)
+    
+    - name: Create manifest list and push (latest tag)
+      if: matrix.locale == 'en_US'
+      working-directory: /tmp/digests
       run: |
-        docker manifest create ghcr.io/${{ github.repository_owner }}/w_scan_cpp:latest \
-          --amend ghcr.io/${{ github.repository_owner }}/w_scan_cpp:${{ matrix.wscan-version }}-${{ matrix.locale }}-arm64 \
-          --amend ghcr.io/${{ github.repository_owner }}/w_scan_cpp:${{ matrix.wscan-version }}-${{ matrix.locale }}-amd64 \
-          --amend ghcr.io/${{ github.repository_owner }}/w_scan_cpp:${{ matrix.wscan-version }}-${{ matrix.locale }}-386 \
-          --amend ghcr.io/${{ github.repository_owner }}/w_scan_cpp:${{ matrix.wscan-version }}-${{ matrix.locale }}-armv6 \
-          --amend ghcr.io/${{ github.repository_owner }}/w_scan_cpp:${{ matrix.wscan-version }}-${{ matrix.locale }}-armv7
-        
-        docker manifest annotate ghcr.io/${{ github.repository_owner }}/w_scan_cpp:latest \
-          ghcr.io/${{ github.repository_owner }}/w_scan_cpp:${{ matrix.wscan-version }}-${{ matrix.locale }}-arm64 --arch arm64
-        docker manifest annotate ghcr.io/${{ github.repository_owner }}/w_scan_cpp:latest \
-          ghcr.io/${{ github.repository_owner }}/w_scan_cpp:${{ matrix.wscan-version }}-${{ matrix.locale }}-amd64 --arch amd64
-        docker manifest annotate ghcr.io/${{ github.repository_owner }}/w_scan_cpp:latest \
-          ghcr.io/${{ github.repository_owner }}/w_scan_cpp:${{ matrix.wscan-version }}-${{ matrix.locale }}-386 --arch 386
-        docker manifest annotate ghcr.io/${{ github.repository_owner }}/w_scan_cpp:latest \
-          ghcr.io/${{ github.repository_owner }}/w_scan_cpp:${{ matrix.wscan-version }}-${{ matrix.locale }}-armv6 --arch arm --variant v6
-        docker manifest annotate ghcr.io/${{ github.repository_owner }}/w_scan_cpp:latest \
-          ghcr.io/${{ github.repository_owner }}/w_scan_cpp:${{ matrix.wscan-version }}-${{ matrix.locale }}-armv7 --arch arm --variant v7
-
-    - name: push latest manifest
-      if: ${{ matrix.locale == 'en_US' }}
+        docker buildx imagetools create \
+          -t ghcr.io/${{ github.repository_owner }}/w_scan_cpp:latest \
+          $(printf 'ghcr.io/${{ github.repository_owner }}/w_scan_cpp@sha256:%s ' *)
+    
+    - name: Inspect images
       run: |
-        docker manifest push ghcr.io/${{ github.repository_owner }}/w_scan_cpp:latest
+        docker buildx imagetools inspect ghcr.io/${{ github.repository_owner }}/w_scan_cpp:${{ matrix.wscan-version }}-${{ matrix.locale }}
+        docker buildx imagetools inspect ghcr.io/${{ github.repository_owner }}/w_scan_cpp:latest-${{ matrix.locale }}
