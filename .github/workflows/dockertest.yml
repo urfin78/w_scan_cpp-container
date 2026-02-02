@@ -21,8 +21,8 @@ jobs:
           - { wscan-version: 20231015, arch: amd64, locale: de_DE, libversion: 1.8.0, pluginversion: 2024.09.15, runner: ubuntu-24.04, platform: linux/amd64 }
           
           # ARM64 nativ
-          - { wscan-version: 20231015, arch: arm64, locale: en_US, libversion: 1.8.0, pluginversion: 2024.09.15, runner: ubuntu-24.04-arm64, platform: linux/arm64 }
-          - { wscan-version: 20231015, arch: arm64, locale: de_DE, libversion: 1.8.0, pluginversion: 2024.09.15, runner: ubuntu-24.04-arm64, platform: linux/arm64 }
+          - { wscan-version: 20231015, arch: arm64, locale: en_US, libversion: 1.8.0, pluginversion: 2024.09.15, runner: ubuntu-24.04-arm, platform: linux/arm64 }
+          - { wscan-version: 20231015, arch: arm64, locale: de_DE, libversion: 1.8.0, pluginversion: 2024.09.15, runner: ubuntu-24.04-arm, platform: linux/arm64 }
           
           # QEMU builds
           - { wscan-version: 20231015, arch: 386, locale: en_US, libversion: 1.8.0, pluginversion: 2024.09.15, runner: ubuntu-24.04, platform: linux/386, qemu: true }
