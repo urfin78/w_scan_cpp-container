@@ -6,8 +6,41 @@ on:
       - 'main'
 
 jobs:
+  # www.gen2vdr.de ist per Anubis gegen Bots geschuetzt, ein simples wget im
+  # Dockerfile bekommt nur noch die Challenge-Seite. Der Download passiert
+  # deshalb hier -- einmal fuer alle Matrix-Jobs, damit die Seite nicht von
+  # jedem Build erneut belastet wird und alle Jobs identische Quellen bauen.
+  download:
+    name: Download sources
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        include:
+          - { wscan-version: 20231015, pluginversion: 2024.09.15 }
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Download sources from gen2vdr.de
+      run: |
+        mkdir -p downloads
+        python3 tools/anubis-fetch.py \
+          https://www.gen2vdr.de/wirbel/w_scan_cpp/w_scan_cpp-${{ matrix.wscan-version }}.tar.bz2 \
+          downloads/w_scan_cpp-${{ matrix.wscan-version }}.tar.bz2
+        python3 tools/anubis-fetch.py \
+          https://www.gen2vdr.de/wirbel/wirbelscan/vdr-wirbelscan-${{ matrix.pluginversion }}.tgz \
+          downloads/vdr-wirbelscan-${{ matrix.pluginversion }}.tgz
+
+    - name: Upload sources
+      uses: actions/upload-artifact@v6
+      with:
+        name: sources-${{ matrix.wscan-version }}-${{ matrix.pluginversion }}
+        path: downloads/*
+        retention-days: 1
+
   build:
     name: Build latest Image
+    needs: download
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
@@ -48,17 +81,11 @@ jobs:
         username: ${{ github.repository_owner }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    # www.gen2vdr.de ist per Anubis gegen Bots geschuetzt, ein simples wget im
-    # Dockerfile bekommt nur noch die Challenge-Seite. Daher hier vorab laden.
-    - name: Download sources from gen2vdr.de
-      run: |
-        mkdir -p downloads
-        python3 tools/anubis-fetch.py \
-          https://www.gen2vdr.de/wirbel/w_scan_cpp/w_scan_cpp-${{ matrix.wscan-version }}.tar.bz2 \
-          downloads/w_scan_cpp-${{ matrix.wscan-version }}.tar.bz2
-        python3 tools/anubis-fetch.py \
-          https://www.gen2vdr.de/wirbel/wirbelscan/vdr-wirbelscan-${{ matrix.pluginversion }}.tgz \
-          downloads/vdr-wirbelscan-${{ matrix.pluginversion }}.tgz
+    - name: Fetch prepared sources
+      uses: actions/download-artifact@v7
+      with:
+        name: sources-${{ matrix.wscan-version }}-${{ matrix.pluginversion }}
+        path: downloads
 
     - name: Build and push with arch-specific tag
       id: build-image

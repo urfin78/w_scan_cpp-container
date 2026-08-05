@@ -20,6 +20,7 @@ import http.cookiejar
 import json
 import re
 import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -37,6 +38,14 @@ PASS_CHALLENGE_PATH = "/.within.website/x/cmd/anubis/api/pass-challenge"
 # Obergrenze gegen Endlosschleifen, falls der Betreiber die Difficulty stark
 # anhebt. Bei Difficulty 5 werden im Mittel rund 1 Mio. Versuche gebraucht.
 MAX_ATTEMPTS = 100_000_000
+# Serverfehler und Netzwerkaussetzer sind bei einer kleinen, privat betriebenen
+# Seite nicht ungewoehnlich. Wartezeit waechst pro Versuch (10s, 20s).
+RETRY_ATTEMPTS = 3
+RETRY_DELAY_SECONDS = 10
+
+
+class ChallengeRejected(Exception):
+    """Anubis hat die eingereichte Loesung nicht akzeptiert."""
 
 
 def solve_challenge(random_data, difficulty):
@@ -85,17 +94,54 @@ def fetch(url, outfile):
         body = opener.open(pass_url).read()
 
         if CHALLENGE_RE.search(body):
-            sys.exit("Fehler: Anubis hat die Loesung nicht akzeptiert.")
+            # Kommt die Challenge-Seite zurueck, war die Loesung ungueltig oder
+            # die Challenge abgelaufen -- ein neuer Anlauf kann helfen.
+            raise ChallengeRejected("Anubis hat die Loesung nicht akzeptiert")
 
     with open(outfile, "wb") as handle:
         handle.write(body)
     print(f"{len(body)} Bytes nach {outfile} geschrieben", file=sys.stderr)
 
 
+def describe(error):
+    """Fehlermeldung, die erkennen laesst, welche Anfrage gescheitert ist."""
+    if isinstance(error, urllib.error.HTTPError):
+        return f"HTTP {error.code} bei {error.url}"
+    if isinstance(error, urllib.error.URLError):
+        return f"Netzwerkfehler: {error.reason}"
+    return str(error)
+
+
+def is_transient(error):
+    """Nur Serverfehler und Netzwerkaussetzer sind einen neuen Versuch wert.
+
+    Ein 404 oder 403 wird durch Warten nicht besser -- HTTPError zuerst
+    pruefen, da es von URLError erbt.
+    """
+    if isinstance(error, urllib.error.HTTPError):
+        return error.code >= 500
+    return isinstance(error, (urllib.error.URLError, ChallengeRejected))
+
+
+def fetch_with_retry(url, outfile):
+    for attempt in range(1, RETRY_ATTEMPTS + 1):
+        try:
+            fetch(url, outfile)
+            return
+        except (urllib.error.URLError, ChallengeRejected) as error:
+            message = describe(error)
+            if not is_transient(error) or attempt == RETRY_ATTEMPTS:
+                sys.exit(f"Fehler: {message}")
+            delay = RETRY_DELAY_SECONDS * attempt
+            print(
+                f"{message} (Versuch {attempt}/{RETRY_ATTEMPTS}), "
+                f"neuer Versuch in {delay}s ...",
+                file=sys.stderr,
+            )
+            time.sleep(delay)
+
+
 if __name__ == "__main__":
     if len(sys.argv) != 3:
         sys.exit(f"Verwendung: {sys.argv[0]} <url> <zieldatei>")
-    try:
-        fetch(sys.argv[1], sys.argv[2])
-    except urllib.error.HTTPError as error:
-        sys.exit(f"Fehler: HTTP {error.code} bei {error.url}")
+    fetch_with_retry(sys.argv[1], sys.argv[2])
