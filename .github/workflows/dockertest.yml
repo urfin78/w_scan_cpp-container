@@ -73,7 +73,7 @@ jobs:
         platforms: ${{ matrix.platform }}
 
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      uses: docker/setup-buildx-action@v4
 
     - name: Fetch prepared sources
       uses: actions/download-artifact@v7
