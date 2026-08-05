@@ -19,7 +19,7 @@ jobs:
           - { wscan-version: 20260515, pluginversion: 2026.05.15 }
 
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
 
     - name: Download sources from gen2vdr.de
       run: |
@@ -63,7 +63,7 @@ jobs:
           - { wscan-version: 20260515, arch: arm, locale: de_DE, variant: v7, libversion: 1.11.2, pluginversion: 2026.05.15, runner: ubuntu-24.04, platform: linux/arm/v7, qemu: true }
     
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
 
     - name: Set up QEMU
       if: matrix.qemu == true
@@ -89,7 +89,7 @@ jobs:
 
     - name: Build and push with arch-specific tag
       id: build-image
-      uses: docker/build-push-action@v6
+      uses: docker/build-push-action@v7
       with:
         context: .
         file: ./Dockerfile

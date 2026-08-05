@@ -20,7 +20,7 @@ jobs:
           - { wscan-version: 20260515, pluginversion: 2026.05.15 }
 
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
 
     - name: Download sources from gen2vdr.de
       run: |
@@ -49,22 +49,17 @@ jobs:
         include:
           # AMD64 nativ
           - { wscan-version: 20260515, arch: amd64, locale: en_US, libversion: 1.11.2, pluginversion: 2026.05.15, runner: ubuntu-24.04, platform: linux/amd64 }
-          - { wscan-version: 20260515, arch: amd64, locale: de_DE, libversion: 1.11.2, pluginversion: 2026.05.15, runner: ubuntu-24.04, platform: linux/amd64 }
-          
+              
           # ARM64 nativ
           - { wscan-version: 20260515, arch: arm64, locale: en_US, libversion: 1.11.2, pluginversion: 2026.05.15, runner: ubuntu-24.04-arm, platform: linux/arm64 }
-          - { wscan-version: 20260515, arch: arm64, locale: de_DE, libversion: 1.11.2, pluginversion: 2026.05.15, runner: ubuntu-24.04-arm, platform: linux/arm64 }
           
           # QEMU builds
           - { wscan-version: 20260515, arch: 386, locale: en_US, libversion: 1.11.2, pluginversion: 2026.05.15, runner: ubuntu-24.04, platform: linux/386, qemu: true }
-          - { wscan-version: 20260515, arch: 386, locale: de_DE, libversion: 1.11.2, pluginversion: 2026.05.15, runner: ubuntu-24.04, platform: linux/386, qemu: true }
           - { wscan-version: 20260515, arch: arm, locale: en_US, variant: v6, libversion: 1.11.2, pluginversion: 2026.05.15, runner: ubuntu-24.04, platform: linux/arm/v6, qemu: true }
           - { wscan-version: 20260515, arch: arm, locale: en_US, variant: v7, libversion: 1.11.2, pluginversion: 2026.05.15, runner: ubuntu-24.04, platform: linux/arm/v7, qemu: true }
-          - { wscan-version: 20260515, arch: arm, locale: de_DE, variant: v6, libversion: 1.11.2, pluginversion: 2026.05.15, runner: ubuntu-24.04, platform: linux/arm/v6, qemu: true }
-          - { wscan-version: 20260515, arch: arm, locale: de_DE, variant: v7, libversion: 1.11.2, pluginversion: 2026.05.15, runner: ubuntu-24.04, platform: linux/arm/v7, qemu: true }
     
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
 
     - name: Set up QEMU
       if: matrix.qemu == true
@@ -83,7 +78,7 @@ jobs:
 
     - name: Build latest image
       id: build-image
-      uses: docker/build-push-action@v6
+      uses: docker/build-push-action@v7
       with:
         context: .
         file: ./Dockerfile
