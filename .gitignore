@@ -1,0 +1,5 @@
+# Von der GitHub Action vorab geladene Quell-Tarballs
+downloads/
+
+# Persoenliche Claude-Code-Einstellungen
+.claude/settings.local.json

@@ -11,10 +11,19 @@ RUN git checkout tags/${LIBVERSION}
 RUN make -j8
 RUN make install
 WORKDIR /src
-RUN wget https://www.gen2vdr.de/wirbel/w_scan_cpp/w_scan_cpp-${VERSION}.tar.bz2
+# Die Quellen werden vorab ausserhalb des Builds geladen, da www.gen2vdr.de
+# per Anubis-Proof-of-Work gegen Bots geschuetzt ist. Siehe tools/anubis-fetch.py.
+COPY downloads/w_scan_cpp-${VERSION}.tar.bz2 /src/
+COPY downloads/vdr-wirbelscan-${PLUGINVERSION}.tgz /src/
 RUN tar xfv w_scan_cpp-${VERSION}.tar.bz2
 WORKDIR /src/w_scan_cpp-${VERSION}
 RUN sed -E -i "s/(WIRBELSCAN_VERSION = wirbelscan-)[0-9]+\.[0-9]+\.[0-9]+/\1${PLUGINVERSION}/g" Makefile
+# vdr zuerst klonen, damit PLUGINS/src existiert, dann wirbelscan aus dem
+# vorab geladenen Tarball auspacken. "make download" ueberspringt das Target
+# danach und laedt nur noch vdr-plugin-satip per git.
+RUN make /src/w_scan_cpp-${VERSION}/vdr
+RUN tar xzf /src/vdr-wirbelscan-${PLUGINVERSION}.tgz -C vdr/PLUGINS/src
+RUN ln -s wirbelscan-${PLUGINVERSION} vdr/PLUGINS/src/wirbelscan
 RUN make download
 RUN make -j8
 FROM debian:13-slim
