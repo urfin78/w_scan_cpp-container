@@ -47,7 +47,19 @@ jobs:
         registry: ghcr.io
         username: ${{ github.repository_owner }}
         password: ${{ secrets.GITHUB_TOKEN }}
-          
+
+    # www.gen2vdr.de ist per Anubis gegen Bots geschuetzt, ein simples wget im
+    # Dockerfile bekommt nur noch die Challenge-Seite. Daher hier vorab laden.
+    - name: Download sources from gen2vdr.de
+      run: |
+        mkdir -p downloads
+        python3 tools/anubis-fetch.py \
+          https://www.gen2vdr.de/wirbel/w_scan_cpp/w_scan_cpp-${{ matrix.wscan-version }}.tar.bz2 \
+          downloads/w_scan_cpp-${{ matrix.wscan-version }}.tar.bz2
+        python3 tools/anubis-fetch.py \
+          https://www.gen2vdr.de/wirbel/wirbelscan/vdr-wirbelscan-${{ matrix.pluginversion }}.tgz \
+          downloads/vdr-wirbelscan-${{ matrix.pluginversion }}.tgz
+
     - name: Build and push with arch-specific tag
       id: build-image
       uses: docker/build-push-action@v6

@@ -43,7 +43,19 @@ jobs:
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
-          
+
+    # www.gen2vdr.de ist per Anubis gegen Bots geschuetzt, ein simples wget im
+    # Dockerfile bekommt nur noch die Challenge-Seite. Daher hier vorab laden.
+    - name: Download sources from gen2vdr.de
+      run: |
+        mkdir -p downloads
+        python3 tools/anubis-fetch.py \
+          https://www.gen2vdr.de/wirbel/w_scan_cpp/w_scan_cpp-${{ matrix.wscan-version }}.tar.bz2 \
+          downloads/w_scan_cpp-${{ matrix.wscan-version }}.tar.bz2
+        python3 tools/anubis-fetch.py \
+          https://www.gen2vdr.de/wirbel/wirbelscan/vdr-wirbelscan-${{ matrix.pluginversion }}.tgz \
+          downloads/vdr-wirbelscan-${{ matrix.pluginversion }}.tgz
+
     - name: Build latest image
       id: build-image
       uses: docker/build-push-action@v6
