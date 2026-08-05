@@ -1,12 +1,10 @@
 name: Docker image build and test
 
-on: 
+on:
   pull_request:
     branches:
       - 'main'
-  push:
-    branches-ignore:
-      - 'main'
+  workflow_dispatch:
 
 jobs:
   # www.gen2vdr.de ist per Anubis gegen Bots geschuetzt, ein simples wget im
