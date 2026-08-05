@@ -33,7 +33,7 @@ jobs:
           downloads/vdr-wirbelscan-${{ matrix.pluginversion }}.tgz
 
     - name: Upload sources
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: sources-${{ matrix.wscan-version }}-${{ matrix.pluginversion }}
         path: downloads/*
