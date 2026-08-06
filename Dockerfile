@@ -1,4 +1,4 @@
-FROM debian:13 as build
+FROM debian:13 AS build
 ARG VERSION
 ARG LIBVERSION
 ARG PLUGINVERSION
